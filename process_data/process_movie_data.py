@@ -52,6 +52,8 @@ class MovieLens:
         url = self.URL_DATA if self.use_big_data and not self.use_demo_data else self.URL_DEMO
         self.zipped_folder_name = url.split("/")[-1].split(".")[0] ## To get the folder name from the url
         req = requests.get(url)
+        if not req.ok:
+            raise ConnectionError("Bad connection")
         with open(self.data_path, 'wb') as output_file:
             output_file.write(req.content)
 
