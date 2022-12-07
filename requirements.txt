@@ -3,3 +3,5 @@ pandas
 tabulate
 matplotlib
 seaborn
+uvicorn
+fastapi
