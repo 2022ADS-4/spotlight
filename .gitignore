@@ -9,6 +9,9 @@
 .pytest_cache
 **/.ipynb_checkpoints/*
 
+# VSCode settings
+**/.vscode/*
+
 # packaging
 *egg*
 *build*
