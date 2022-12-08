@@ -3,6 +3,7 @@
 import requests, tempfile, os, zipfile, gzip, shutil
 import pandas as pd
 from config import DATA_PATH
+import json
 
 class MovieLens:
     """
@@ -20,6 +21,7 @@ class MovieLens:
             temp_folder=None,
             data_download_path = None,
             merged_data_path = None,
+            movies_json = None,
             output_path=None,
             compress=True
     ):
@@ -31,20 +33,26 @@ class MovieLens:
         self.tempfolder = tempfile.mkdtemp(prefix="movielens") if temp_folder is None else temp_folder
         self.data_path = tempfile.mktemp(prefix="movielens_data", suffix=".zip", dir=self.tempfolder) if data_download_path is None else data_download_path
         self.data_merged = tempfile.mktemp(prefix="movielens_merged", suffix=".csv", dir=self.tempfolder) if merged_data_path is None else merged_data_path
+        self.movies_json = tempfile.mktemp(prefix="movielens_moviestitles", suffix=".json", dir=self.tempfolder) if movies_json is None else movies_json
 
         self.compress = compress
         self.output_path = output_path
 
         self.zipped_folder_name = None ##the files extracted to a folder ---> get from url, while downloading
+        self.links_data = None
+        self.movies_data = None
+        self.ratings_data = None
+        self.tags_data = None
 
     def process(self):
-        self.download_data()
-        self.unzip_data()
-        self.merge_file()
+        self.get_data()
         if self.compress:
             self.compress_data(self.data_merged, self.output_path)
         else:
             os.replace(self.data_merged, self.output_path)
+
+        os.replace(self.movies_json, os.path.join(DATA_PATH, "movie_titles.json"))
+
         self.remove_temp(self.tempfolder)
 
     def download_data(self):
@@ -60,22 +68,41 @@ class MovieLens:
         with zipfile.ZipFile(self.data_path, 'r') as zip_ref:
             zip_ref.extractall(self.tempfolder)
 
+    def get_data(self):
+        self.download_data()
+        self.unzip_data()
+
+        self.links_data = pd.read_csv(os.path.join(self.tempfolder, self.zipped_folder_name, "links.csv"))
+        self.movies_data = pd.read_csv(os.path.join(self.tempfolder, self.zipped_folder_name, "movies.csv"))
+        self.ratings_data = pd.read_csv(os.path.join(self.tempfolder, self.zipped_folder_name, "ratings.csv"))
+        self.tags_data = pd.read_csv(os.path.join(self.tempfolder, self.zipped_folder_name, "tags.csv"))
+
+        self.merge_file()
+        self.get_movie_titles_json()
     def merge_file(self):
         ### merge the csv files
         files_to_merged = ["links.csv", "movies.csv", "ratings.csv", "tags.csv"]
-        links_data = pd.read_csv(os.path.join(self.tempfolder, self.zipped_folder_name, "links.csv"))
-        movies_data = pd.read_csv(os.path.join(self.tempfolder, self.zipped_folder_name, "movies.csv"))
-        ratings_data = pd.read_csv(os.path.join(self.tempfolder, self.zipped_folder_name, "ratings.csv"))
-        tags_data = pd.read_csv(os.path.join(self.tempfolder, self.zipped_folder_name, "tags.csv"))
 
         merged_data = pd.merge(
             pd.merge(
-                pd.merge(movies_data, ratings_data, on="movieId", how="outer"), #1
-                tags_data, on=["userId", "movieId", "timestamp"], how="outer"), #2
-            links_data, on="movieId", how="outer" #3
+                pd.merge(self.movies_data, self.ratings_data, on="movieId", how="outer"), #1
+                self.tags_data, on=["userId", "movieId", "timestamp"], how="outer"), #2
+            self.links_data, on="movieId", how="outer" #3
         )
 
         merged_data.to_csv(self.data_merged, index=False)
+
+    def get_movie_titles_json(self):
+        movies_dict = {}
+        with open(self.movies_data, "r") as fh:
+            for line in fh:
+                movie_id, title = line.strip().split(",")[:2]
+                if movie_id not in movies_dict:
+                    movies_dict[movie_id] = title
+
+        with open(self.movies_json, "w") as mj:
+            json.dump(movies_dict, mj)
+
 
     def process_data(self):
         pass
