@@ -2,9 +2,10 @@ name: Python Package using Conda
 
 on:
   push:
-    branches: [ "master", "dev", "41-CI-CD-second-trying" ]
-  pull_request:
-    branches: [ "master", "dev" ]
+    branches: [ "41-CI-CD-second-trying" ]
+    #branches: [ "master", "dev", "41-CI-CD-second-trying" ]
+  #pull_request:
+  #  branches: [ "master", "dev" ]
 
 jobs:
   build-linux:
