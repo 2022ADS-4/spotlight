@@ -37,6 +37,9 @@ class MovieLens:
 
         self.compress = compress
         self.output_path = output_path
+        ###Variables used in the methods
+        self.url = self.URL_DATA if self.use_big_data and not self.use_demo_data else self.URL_DEMO
+        self.zipped_folder_name = self.url.split("/")[-1].split(".")[0]  ## To get the folder name from the url
 
         self.zipped_folder_name = None ##the files extracted to a folder ---> get from url, while downloading
         self.links_data = None
@@ -57,9 +60,9 @@ class MovieLens:
 
     def download_data(self):
         ### downloads data from movielens link to a zip file
-        url = self.URL_DATA if self.use_big_data and not self.use_demo_data else self.URL_DEMO
-        self.zipped_folder_name = url.split("/")[-1].split(".")[0] ## To get the folder name from the url
-        req = requests.get(url)
+        req = requests.get(self.url)
+        if not req.ok:
+            raise ConnectionError("Bad connection")
         with open(self.data_path, 'wb') as output_file:
             output_file.write(req.content)
 
@@ -146,14 +149,13 @@ class VisualizeData:
         self.numeric_data_keys = numeric_data_keys
 
         ### declare pandas dataframe
-        self.dataframe:pd.DataFrame = None
+        self.dataframe:pd.DataFrame = self.read_data()
 
 
         ### Add to a dictionary that collects what to be plotted
         self.plot_variables = {}
 
     def process(self):
-        self.read_data()
         self.plot_numeric_data(keys=self.numeric_data_keys)
         self.plot_category_counts()
         self.plot_data_distribution(keys=self.numeric_data_keys)
@@ -165,9 +167,9 @@ class VisualizeData:
         reads the data from 'data_file' and converts it into a pandas dataframe
         """
         if self.data_file.endswith(".gz") or self.data_file.endswith(".gzip"):
-            self.dataframe = pd.read_csv(self.data_file, compression="gzip", sep=",")
+            return pd.read_csv(self.data_file, compression="gzip", sep=",")
         else:
-            self.dataframe = pd.read_csv(self.data_file, sep=",")
+            return pd.read_csv(self.data_file, sep=",")
 
     def plot_data_distribution(self, keys):
         ### get data description
@@ -235,7 +237,8 @@ class VisualizeData:
         self.plot_variables["genre_counts"] = fig
 
     def get_genre_counts(self, keys=None):
-        keys = keys if keys is not None else ["movieId", "genres"]
+        keys = keys if keys is not None else ["movieId"]
+        keys.append("genres")
         movie_genres = self.dataframe.loc[:, keys].drop_duplicates().dropna(axis=0)
         genres = movie_genres["genres"].apply(lambda x: x.strip().split("|"))
 
