@@ -20,7 +20,7 @@ class MovielensDataTest(unittest.TestCase):
         MovieLens.URL_DEMO = "https://files.grouplens.org/datasets/movielens/somemockdata"
         self.assertRaises(ConnectionError, lambda: MovieLens(use_demo_data=True, use_big_data=False).download_data())
 
-    def test_data_merge(self):
+    def __deprecated_test_data_merge(self):
         ## initiate class
         test_output = tempfile.mktemp(dir=test_out_dir, prefix="test_data_merge", suffix=".csv")
         ml_obj = MovieLens(
