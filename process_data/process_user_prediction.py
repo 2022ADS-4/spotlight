@@ -48,3 +48,6 @@ def process_get_movie_recommendations(user_id, *args):
     movies = get_movie_recommendations_from_model(user_id, model)
     fltr_movies = filter_recommended_movies(*args)
     return order_filtered_movies(5)
+
+##TODO: sequential --> needs a playlist
+##TODO: explicit --> user_id
