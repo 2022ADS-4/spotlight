@@ -41,7 +41,6 @@ class MovieLens:
         self.url = self.URL_DATA if self.use_big_data and not self.use_demo_data else self.URL_DEMO
         self.zipped_folder_name = self.url.split("/")[-1].split(".")[0]  ## To get the folder name from the url
 
-        self.zipped_folder_name = None ##the files extracted to a folder ---> get from url, while downloading
         self.links_data = None
         self.movies_data = None
         self.ratings_data = None
