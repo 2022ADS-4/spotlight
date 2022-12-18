@@ -28,15 +28,23 @@ def datapage():
     pass
 
 @app.get("/get_movies")#, response_model=Output)
-def get_recommended_movies(user_id, genre=None):
+def get_recommended_movies(user_id):
     """
-        this function will take user input from front
-        and deliver it to recommender model to process
-        also triggers sending recommender outputs to front
-        """
-    # from data_process import run_data_process
-    # movies_recommendations:dict = run_data_process.get_recommendations(user_data)
-    user_db = ["1", "2", "3", "12", "13", "41", "51"]
-    if user_id in user_db: ###mock data, will change
+    this function will take user input from front
+    and deliver it to recommender model to process
+    also triggers sending recommender outputs to front
+    """
+    from connect_db import MongoDB
+    ##Ask to MongoDB if user exists
+    user_info = MongoDB("user1", "1234").get_user(user_id)
+    if user_info:
+        ##from process_data.recommend_movies import recommender
+        ##return recommender(user_id)
         return {"movie_ids": [2], "movie_titles": ["something in the way"], "ratings": [3.6]}
-    return {"movie_ids": [None], "movie_titles": [None], "ratings": [None]}
+    return {}
+
+@app.post("/rating")
+def post_user_rating(user_id, movie_id, rating):
+    from connect_db import MongoDB
+    ##Ask to MongoDB if user exists
+    return MongoDB("user1", "1234").post_user_rating(user_id, movie_id, rating)
