@@ -6,7 +6,7 @@ class MongoDB:
     """
     This is the main class for getting and posting information to our mongo database
     """
-    def __init__(self, db_access_key, db_pass,  db="spotlight_main", collection="main",):
+    def __init__(self, db_access_key="user1", db_pass="1234",  db="spotlight_main", collection="main",):
         self.client = self.get_mongo_client(db_access_key, db_pass)
         self.db = self.client[db]
         self.collection = self.db[collection]
@@ -26,6 +26,9 @@ class MongoDB:
 
     def delete_entry(self, entry:Dict):
         return self.collection.delete_one(entry, comment=f"deleted {entry}")
+
+    def get_one_info(self, query:Dict):
+        return self.collection.find_one(query)
     
     def get_info(self, query:Dict):
         return [entry for entry in self.collection.find(query)]
@@ -45,3 +48,6 @@ class MongoDB:
 
     def delete_user_entry(self, user_id, movie_id):
         return self.delete_entry({"user_id": user_id, "movie_id": movie_id})
+
+    def get_movie(self, movie_id):
+        return self.get_one_info({"movie_id": movie_id})
