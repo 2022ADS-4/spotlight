@@ -7,3 +7,6 @@ uvicorn
 fastapi
 pymongo[srv]
 pytest
+h5py
+tables
+cython

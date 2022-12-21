@@ -26,11 +26,13 @@ class RecommendMovies:
         return True
     def get_user_data(self,user_id):
         return self.MONGO_ACCESS.get_user(user_id)
+
     def get_recommendations_from_explicit_model(self):
         ##TODO: load explicit model, ask user_id, get movie ids
         ##TODO: connect it to the explicit model thing
         return ["12", "11", "99"]
         #return self.explicit_model(self.user_id)
+
 
     def get_recommendations_from_sequential_model(self):
         ##TODO: load sequential model, ask user_id, get movie ids
@@ -39,9 +41,11 @@ class RecommendMovies:
 
     def get_previously_watched_movies(self):
         return [movie_data["movie_id"] for movie_data in self.user_data]
+
     @staticmethod
     def filter_previously_watched_movies(recommended_movies, previous_movies):
         return list(set(recommended_movies).difference(set(previous_movies)))
+
     def get_movie_title_and_genre(self, movie_ids:List):
         recommended_movies = []
         for movie_id in movie_ids:

@@ -7,6 +7,10 @@ class MongoDB:
     This is the main class for getting and posting information to our mongo database
     """
     def __init__(self, db_access_key="user1", db_pass="1234",  db="spotlight_main", collection="main",):
+        self.db_access_key = "user1" if db_access_key is None else db_access_key
+        self.db_pass="1234" if db_pass is None else db_pass
+        self.db="spotlight_main" if db is None else db
+        self.collection="main" if collection is None else collection
         self.client = self.get_mongo_client(db_access_key, db_pass)
         self.db = self.client[db]
         self.collection = self.db[collection]

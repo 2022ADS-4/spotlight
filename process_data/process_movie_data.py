@@ -23,7 +23,8 @@ class MovieLens:
             merged_data_path = None,
             movies_json = None,
             output_path=None,
-            compress=True
+            compress=True,
+            hdf5_file_path=None
     ):
         self.use_demo_data = use_demo_data
         self.use_big_data = use_big_data
@@ -34,6 +35,8 @@ class MovieLens:
         self.data_path = tempfile.mktemp(prefix="movielens_data", suffix=".zip", dir=self.tempfolder) if data_download_path is None else data_download_path
         self.data_merged = tempfile.mktemp(prefix="movielens_merged", suffix=".csv", dir=self.tempfolder) if merged_data_path is None else merged_data_path
         self.movies_json = tempfile.mktemp(prefix="movielens_moviestitles", suffix=".json", dir=self.tempfolder) if movies_json is None else movies_json
+
+        self.hdf5_file_path = hdf5_file_path if hdf5_file_path is not None else os.path.join(DATA_PATH, "db_data.hdf5")
 
         self.compress = compress
         self.output_path = output_path
@@ -58,6 +61,36 @@ class MovieLens:
         os.replace(self.movies_json, os.path.join(DATA_PATH, "movie_titles.json"))
 
         self.remove_temp(self.tempfolder)
+
+    def process_upload_db(self):
+        for user_dict in self.parse_csv(self.data_path):
+            self.upload_data(None, None,user_dict)
+
+    def process_data_for_spotlight_model(self):
+        """
+        returns data similar to spotlight's code
+        """
+        from spotlight.interactions import Interactions
+        import numpy as np
+
+        user_id = []
+        item_id = []
+        rating = []
+        #timestamp = []
+
+        for user_data in self.download_data_from_db():
+            if user_data["user_id"] is None or user_data["movie_id"] is None or user_data["rating"] is None: continue
+            user_id.append(int(user_data["user_id"]))
+            item_id.append(int(user_data["movie_id"]))
+            rating.append(float(user_data["rating"]))
+            #timestamp.append(int(float(user_data["timestamp"])))
+
+        return Interactions(
+            user_ids=np.array(user_id)[:],
+            item_ids=np.array(item_id)[:],
+            ratings=np.array(rating)[:],
+            #timestamps=np.array(timestamp)[:]
+        )
 
     def download_data(self):
         ### downloads data from movielens link to a zip file
@@ -108,12 +141,8 @@ class MovieLens:
         with open(self.movies_json, "w") as mj:
             json.dump(movies_dict, mj)
     @staticmethod
-    def convert_csv2dict(in_csv):
-        """
-        converts the merged data into a dictionary for to upload to mongo DB
-        """
+    def parse_csv(in_csv):
         import csv
-        data = []
         with open(in_csv, "r") as fh:
             for line in csv.reader(fh):
                 if "movieId" in line: continue
@@ -122,18 +151,15 @@ class MovieLens:
                 genres: list = line[2].split("|")
                 user_id = line[3]
                 rating = line[4]
-                data.append(
-                    {
+                timestamp = line[5]
+                yield {
                         "movie_id": movie_id,
                         "title": str(title),
                         "genres": genres,
                         "user_id": str(int(float(user_id))) if user_id != "" else None,
-                        "rating": float(rating) if rating != "" else None
-                    })
-        return data
-
-    def process_data(self):
-        pass
+                        "rating": float(rating) if rating != "" else None,
+                        "timestamp":timestamp
+                    }
 
     @staticmethod
     def upload_data(db_user, db_pass, data):
@@ -146,6 +172,11 @@ class MovieLens:
         else:
             raise Exception("Could not identify data type to upload")
 
+    @staticmethod
+    def download_data_from_db():
+        from API.connect_db import MongoDB
+        mbd = MongoDB()
+        return list(mbd.get_info({}))
 
     def save_data(self):
         pass
