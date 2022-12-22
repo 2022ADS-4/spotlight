@@ -55,14 +55,8 @@ class MongoDB:
 
     def get_movie(self, movie_id):
         return self.get_one_info({"movie_id": movie_id})
-
-    def get_sequential_model(self):
-        return self.get_info({"model":"sequential"})
-
-    def get_explicit_model(self):
-        return self.get_info({"model": "explicit"})
-
-    def load_db_access_credentials(self):
+        
+     def load_db_access_credentials(self):
         with open("./credentials.txt", "r") as fh:
             for line in fh:
                 if "user=" in line:
@@ -71,3 +65,35 @@ class MongoDB:
                 elif "pass=" in line:
                     passw = line.strip().split("=")[-1]
                     self.db_pass = passw
+    
+    # functions from Thor:
+    # tested for sequence model. works!
+    def save_sequence_model(self, model, model_infos):
+        query_dict = {"sequence_model": model, "model_info": model_infos}
+        model_previous = self.get_info({"sequence_model": model, "model_info": model_infos})
+        if model_previous:
+            return self.update_entry(model_previous, query_dict)
+        return self.insert_entry(query_dict)
+    
+    def save_explicit_model(self, model):
+        query_dict = {"explicit_model": model}
+        model_previous = self.get_info({"explicit_model": model})
+        if model_previous:
+            return self.update_entry(model_previous, query_dict)
+        return self.insert_entry(query_dict)
+    
+    def get_explicit_model(self, model):
+        query_dict = {"explicit_model": model}
+        data = self.collection.find_one(query_dict)
+        with open("explicit_model.pt","wb") as f:
+            f.write(data["explicit_model"])
+        return None
+    
+    def get_sequence_model(self, model):
+        query_dict = {"sequence_model": model}
+        data = self.collection.find_one(query_dict)
+        with open("sequence_model.pt","wb") as f:
+            f.write(data["sequence_model"])
+        with open("sequence_model.txt","wb") as f:
+            f.write(data["model_info"])
+        return None
