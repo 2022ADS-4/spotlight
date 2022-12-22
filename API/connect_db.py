@@ -55,7 +55,7 @@ class MongoDB:
 
     def get_movie(self, movie_id):
         return self.get_one_info({"movie_id": movie_id})
-    
+        
     def load_db_access_credentials(self):
         with open("./credentials.txt", "r") as fh:
             for line in fh:
@@ -65,7 +65,10 @@ class MongoDB:
                 elif "pass=" in line:
                     passw = line.strip().split("=")[-1]
                     self.db_pass = passw
+
     # functions from Thor:
+    # tested for sequence model. works!
+
     def save_sequence_model(self, model, model_infos):
         query_dict = {"sequence_model": model, "model_info": model_infos}
         model_previous = self.get_info({"sequence_model": model, "model_info": model_infos})
@@ -92,4 +95,6 @@ class MongoDB:
         data = self.collection.find_one(query_dict)
         with open("sequence_model.pt","wb") as f:
             f.write(data["sequence_model"])
+        with open("sequence_model.txt","wb") as f:
+            f.write(data["model_info"])
         return None
