@@ -55,3 +55,17 @@ class MongoDB:
 
     def get_movie(self, movie_id):
         return self.get_one_info({"movie_id": movie_id})
+    
+    def save_sequence_model(self, model, model_infos):
+        query_dict = {"sequence_model": model, "model_info": model_infos}
+        model_previous = self.get_info({"sequence_model": model, "model_info": model_infos})
+        if model_previous:
+            return self.update_entry(model_previous, query_dict)
+        return self.insert_entry(query_dict)
+    
+    def save_explicit_model(self, model):
+        query_dict = {"explicit_model": model}
+        model_previous = self.get_info({"explicit_model": model})
+        if model_previous:
+            return self.update_entry(model_previous, query_dict)
+        return self.insert_entry(query_dict)
