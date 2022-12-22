@@ -6,7 +6,11 @@ class MongoDB:
     """
     This is the main class for getting and posting information to our mongo database
     """
-    def __init__(self, db_access_key, db_pass,  db="spotlight_main", collection="main",):
+    def __init__(self, db_access_key="user1", db_pass="1234",  db="spotlight_main", collection="main",):
+        self.db_access_key = "user1" if db_access_key is None else db_access_key
+        self.db_pass="1234" if db_pass is None else db_pass
+        self.db="spotlight_main" if db is None else db
+        self.collection="main" if collection is None else collection
         self.client = self.get_mongo_client(db_access_key, db_pass)
         self.db = self.client[db]
         self.collection = self.db[collection]
@@ -26,6 +30,9 @@ class MongoDB:
 
     def delete_entry(self, entry:Dict):
         return self.collection.delete_one(entry, comment=f"deleted {entry}")
+
+    def get_one_info(self, query:Dict):
+        return self.collection.find_one(query)
     
     def get_info(self, query:Dict):
         return [entry for entry in self.collection.find(query)]
@@ -45,3 +52,22 @@ class MongoDB:
 
     def delete_user_entry(self, user_id, movie_id):
         return self.delete_entry({"user_id": user_id, "movie_id": movie_id})
+
+    def get_movie(self, movie_id):
+        return self.get_one_info({"movie_id": movie_id})
+
+    def get_sequential_model(self):
+        return self.get_info({"model":"sequential"})
+
+    def get_explicit_model(self):
+        return self.get_info({"model": "explicit"})
+
+    def load_db_access_credentials(self):
+        with open("./credentials.txt", "r") as fh:
+            for line in fh:
+                if "user=" in line:
+                    user = line.strip().split("=")[-1]
+                    self.db_access_key = user
+                elif "pass=" in line:
+                    passw = line.strip().split("=")[-1]
+                    self.db_pass = passw
