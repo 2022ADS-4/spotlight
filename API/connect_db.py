@@ -56,6 +56,8 @@ class MongoDB:
     def get_movie(self, movie_id):
         return self.get_one_info({"movie_id": movie_id})
     
+    # functions from Thor:
+    # tested for sequence model. works!
     def save_sequence_model(self, model, model_infos):
         query_dict = {"sequence_model": model, "model_info": model_infos}
         model_previous = self.get_info({"sequence_model": model, "model_info": model_infos})
@@ -69,3 +71,19 @@ class MongoDB:
         if model_previous:
             return self.update_entry(model_previous, query_dict)
         return self.insert_entry(query_dict)
+    
+    def get_explicit_model(self, model):
+        query_dict = {"explicit_model": model}
+        data = self.collection.find_one(query_dict)
+        with open("explicit_model.pt","wb") as f:
+            f.write(data["explicit_model"])
+        return None
+    
+    def get_sequence_model(self, model):
+        query_dict = {"sequence_model": model}
+        data = self.collection.find_one(query_dict)
+        with open("sequence_model.pt","wb") as f:
+            f.write(data["sequence_model"])
+        with open("sequence_model.txt","wb") as f:
+            f.write(data["model_info"])
+        return None
