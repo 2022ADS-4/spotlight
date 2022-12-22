@@ -5,4 +5,4 @@ RUN pip install -r requirements.txt
 RUN mkdir -p app
 COPY ./app app
 RUN pip install "git+https://github.com/2022ADS-4/spotlight.git#egg=spotlight"
-CMD ["python","app/SystematicModelOptimization.py"]
+CMD ["python","app/ExplicitModel.py"]

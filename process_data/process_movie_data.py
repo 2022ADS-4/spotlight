@@ -41,7 +41,8 @@ class MovieLens:
         self.url = self.URL_DATA if self.use_big_data and not self.use_demo_data else self.URL_DEMO
         self.zipped_folder_name = self.url.split("/")[-1].split(".")[0]  ## To get the folder name from the url
 
-        self.zipped_folder_name = None ##the files extracted to a folder ---> get from url, while downloading
+        #self.zipped_folder_name = None ##the files extracted to a folder ---> get from url, while downloading
+        self.movies_path = os.path.join(self.tempfolder, self.zipped_folder_name, "movies.csv")
         self.links_data = None
         self.movies_data = None
         self.ratings_data = None
@@ -57,6 +58,36 @@ class MovieLens:
         os.replace(self.movies_json, os.path.join(DATA_PATH, "movie_titles.json"))
 
         self.remove_temp(self.tempfolder)
+
+    def process_upload_db(self):
+        for user_dict in self.parse_csv(self.data_path):
+            self.upload_data(None, None,user_dict)
+
+    def process_data_for_spotlight_model(self):
+        """
+        returns data similar to spotlight's code
+        """
+        from spotlight.interactions import Interactions
+        import numpy as np
+
+        user_id = []
+        item_id = []
+        rating = []
+        #timestamp = []
+
+        for user_data in self.download_data_from_db():
+            if user_data["user_id"] is None or user_data["movie_id"] is None or user_data["rating"] is None: continue
+            user_id.append(int(user_data["user_id"]))
+            item_id.append(int(user_data["movie_id"]))
+            rating.append(float(user_data["rating"]))
+            #timestamp.append(int(float(user_data["timestamp"])))
+
+        return Interactions(
+            user_ids=np.array(user_id)[:],
+            item_ids=np.array(item_id)[:],
+            ratings=np.array(rating)[:],
+            #timestamps=np.array(timestamp)[:]
+        )
 
     def download_data(self):
         ### downloads data from movielens link to a zip file
@@ -97,21 +128,76 @@ class MovieLens:
 
     def get_movie_titles_json(self):
         movies_dict = {}
-        with open(self.movies_data, "r") as fh:
+        with open(self.movies_path, "r") as fh:
             for line in fh:
+                if line.startswith("movieId"): continue
                 movie_id, title = line.strip().split(",")[:2]
                 if movie_id not in movies_dict:
                     movies_dict[movie_id] = title
 
         with open(self.movies_json, "w") as mj:
             json.dump(movies_dict, mj)
+    @staticmethod
+    def parse_csv(in_csv):
+        import csv
+        with open(in_csv, "r") as fh:
+            for line in csv.reader(fh):
+                if "movieId" in line: continue
+                movie_id = line[0]
+                title = line[1]
+                genres: list = line[2].split("|")
+                user_id = line[3]
+                rating = line[4]
+                timestamp = line[5]
+                yield {
+                        "movie_id": movie_id,
+                        "title": str(title),
+                        "genres": genres,
+                        "user_id": str(int(float(user_id))) if user_id != "" else None,
+                        "rating": float(rating) if rating != "" else None,
+                        "timestamp":timestamp
+                    }
 
+    @staticmethod
+    def upload_data(db_user, db_pass, data):
+        from API.connect_db import MongoDB
+        mdb = MongoDB(db_user, db_pass)
+        if isinstance(data, dict):
+            mdb.insert_entry(data)
+        elif isinstance(data, list):
+            mdb.insert_many_entries(data)
+        else:
+            raise Exception("Could not identify data type to upload")
+    @staticmethod
+    def convert_csv2dict(in_csv):
+        """
+        converts the merged data into a dictionary for to upload to mongo DB
+        """
+        import csv
+        data = []
+        with open(in_csv, "r") as fh:
+            for line in csv.reader(fh):
+                if "movieId" in line: continue
+                movie_id = line[0]
+                title = line[1]
+                genres: list = line[2].split("|")
+                user_id = line[3]
+                rating = line[4]
+                data.append(
+                    {
+                        "movie_id": movie_id,
+                        "title": str(title),
+                        "genres": genres,
+                        "user_id": str(int(float(user_id))) if user_id != "" else None,
+                        "rating": float(rating) if rating != "" else None
+                    })
+        return data
 
-    def process_data(self):
-        pass
-
-    def upload_data(self):
-        pass
+    @staticmethod
+    def download_data_from_db():
+        from API.connect_db import MongoDB
+        mbd = MongoDB()
+        return list(mbd.get_info({}))
 
     def save_data(self):
         pass
