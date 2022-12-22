@@ -19,6 +19,7 @@ from mlflow import log_metric, log_param, log_artifact
 import torch
 from mlflow.tracking import MlflowClient
 
+from connect_db import MongoDB
 
 
 def get_best_params(experiment_id):
@@ -124,5 +125,17 @@ best_model = ImplicitSequenceModel(n_iter=n_iter,
                                   representation=model_type,
                                   loss=loss)
 best_model.fit(dataset)
-torch.save(best_model, "./saved_model.pt")
+torch.save(best_model, "saved_model.pt")
+
+MONGO_ACCESS = MongoDB()
+
+model_file = 'saved_model.pt'
+model_infos = 'saved_model.txt'
+with open(model_file, "rb") as f:
+    encoded = f.read()
+with open(model_infos, "rb") as f:
+    infos = f.read()
+MONGO_ACCESS.save_sequence_model(encoded, infos)
+
+
 print("The code has been executed succesfully!")
