@@ -14,6 +14,7 @@ dataset = get_movielens_dataset(variant='100K')
 import torch
 
 from spotlight.factorization.explicit import ExplicitFactorizationModel
+from connect_db import MongoDB
 
 model = ExplicitFactorizationModel(loss='regression',
                                    embedding_dim=128,  # latent dimensionality
@@ -54,3 +55,12 @@ def recommend_movies(user_id, dataset, model, n_movies=5):
     return [outdict[str(v)] for v in list(movie_id)]
 
 print(recommend_movies(1, dataset.item_ids, model))
+
+torch.save(model, "explicit_model.pt")
+
+MONGO_ACCESS = MongoDB()
+
+model_file = 'explicit_model.pt'
+with open(model_file, "rb") as f:
+    encoded = f.read()
+MONGO_ACCESS.save_explicit_model(encoded)
