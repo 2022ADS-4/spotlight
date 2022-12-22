@@ -35,9 +35,9 @@ def get_recommended_movies(user_id):
     also triggers sending recommender outputs to front
     """
     from recommend_movies import RecommendMovies
-    return RecommendMovies(user_id, None, None).recommend()
+    return RecommendMovies(user_id).recommend()
 
 @app.post("/rating")
 def post_user_rating(user_id, movie_id, rating):
     from recommend_movies import RecommendMovies
-    return RecommendMovies(user_id, None, None).rate_movie(movie_id, rating)
+    return RecommendMovies(user_id).rate_movie(movie_id, rating)

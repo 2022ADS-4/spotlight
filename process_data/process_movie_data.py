@@ -23,8 +23,7 @@ class MovieLens:
             merged_data_path = None,
             movies_json = None,
             output_path=None,
-            compress=True,
-            hdf5_file_path=None
+            compress=True
     ):
         self.use_demo_data = use_demo_data
         self.use_big_data = use_big_data
@@ -35,8 +34,6 @@ class MovieLens:
         self.data_path = tempfile.mktemp(prefix="movielens_data", suffix=".zip", dir=self.tempfolder) if data_download_path is None else data_download_path
         self.data_merged = tempfile.mktemp(prefix="movielens_merged", suffix=".csv", dir=self.tempfolder) if merged_data_path is None else merged_data_path
         self.movies_json = tempfile.mktemp(prefix="movielens_moviestitles", suffix=".json", dir=self.tempfolder) if movies_json is None else movies_json
-
-        self.hdf5_file_path = hdf5_file_path if hdf5_file_path is not None else os.path.join(DATA_PATH, "db_data.hdf5")
 
         self.compress = compress
         self.output_path = output_path
@@ -171,6 +168,30 @@ class MovieLens:
             mdb.insert_many_entries(data)
         else:
             raise Exception("Could not identify data type to upload")
+    @staticmethod
+    def convert_csv2dict(in_csv):
+        """
+        converts the merged data into a dictionary for to upload to mongo DB
+        """
+        import csv
+        data = []
+        with open(in_csv, "r") as fh:
+            for line in csv.reader(fh):
+                if "movieId" in line: continue
+                movie_id = line[0]
+                title = line[1]
+                genres: list = line[2].split("|")
+                user_id = line[3]
+                rating = line[4]
+                data.append(
+                    {
+                        "movie_id": movie_id,
+                        "title": str(title),
+                        "genres": genres,
+                        "user_id": str(int(float(user_id))) if user_id != "" else None,
+                        "rating": float(rating) if rating != "" else None
+                    })
+        return data
 
     @staticmethod
     def download_data_from_db():

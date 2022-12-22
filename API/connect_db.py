@@ -55,6 +55,16 @@ class MongoDB:
 
     def get_movie(self, movie_id):
         return self.get_one_info({"movie_id": movie_id})
+        
+     def load_db_access_credentials(self):
+        with open("./credentials.txt", "r") as fh:
+            for line in fh:
+                if "user=" in line:
+                    user = line.strip().split("=")[-1]
+                    self.db_access_key = user
+                elif "pass=" in line:
+                    passw = line.strip().split("=")[-1]
+                    self.db_pass = passw
     
     # functions from Thor:
     # tested for sequence model. works!
