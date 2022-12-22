@@ -22,6 +22,7 @@ from mlflow.tracking import MlflowClient
 from connect_db import MongoDB
 
 
+
 def get_best_params(experiment_id):
     """requires an experiment_id and gives the parameters of the best run of this experiment as a dictionary"""
     client = MlflowClient()
@@ -79,7 +80,9 @@ except:
 
 sequmods = ['pooling','cnn','lstm']
 loss='bpr'
+
 iters = [1]#,5,10,20,30,40,50,60,70,80,90,100]
+
 for repres in sequmods:
     for n_iter in iters:
         with mlflow.start_run(experiment_id=experiment_id):
@@ -125,6 +128,7 @@ best_model = ImplicitSequenceModel(n_iter=n_iter,
                                   representation=model_type,
                                   loss=loss)
 best_model.fit(dataset)
+
 torch.save(best_model, "saved_model.pt")
 
 MONGO_ACCESS = MongoDB()
@@ -139,3 +143,6 @@ MONGO_ACCESS.save_sequence_model(encoded, infos)
 
 
 print("The code has been executed succesfully!")
+=======
+torch.save(best_model, "./saved_model.pt")
+
