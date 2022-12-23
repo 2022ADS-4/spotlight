@@ -66,35 +66,32 @@ class MongoDB:
                     passw = line.strip().split("=")[-1]
                     self.db_pass = passw
 
+    def get_prediction_model(self, model_name:str):
+        query_dict = {"model_name" : model_name}
+        return self.get_one_info(query_dict)
+
     # functions from Thor:
     # tested for sequence model. works!
 
-    def save_sequence_model(self, model, model_infos):
-        query_dict = {"sequence_model": model, "model_info": model_infos}
-        model_previous = self.get_info({"sequence_model": model, "model_info": model_infos})
+    def save_model(self, model_name, model_file, model_infos=None):
+        query_dict = {"model_name": model_name, "model_file":model_file, "model_info": model_infos}
+        model_previous = self.get_info({"model_name":model_name})
         if model_previous:
             return self.update_entry(model_previous, query_dict)
         return self.insert_entry(query_dict)
     
-    def save_explicit_model(self, model):
-        query_dict = {"explicit_model": model}
-        model_previous = self.get_info({"explicit_model": model})
-        if model_previous:
-            return self.update_entry(model_previous, query_dict)
-        return self.insert_entry(query_dict)
+    def get_explicit_model(self):
+        return self.get_prediction_model("explicit")["model_file"]
+        # with open("explicit_model.pt","wb") as f:
+        #     f.write(data["explicit_model"])
+        # return "explicit_model.pt"
     
-    def get_explicit_model(self, model):
-        query_dict = {"explicit_model": model}
-        data = self.collection.find_one(query_dict)
-        with open("explicit_model.pt","wb") as f:
-            f.write(data["explicit_model"])
-        return None
-    
-    def get_sequence_model(self, model):
-        query_dict = {"sequence_model": model}
-        data = self.collection.find_one(query_dict)
-        with open("sequence_model.pt","wb") as f:
-            f.write(data["sequence_model"])
-        with open("sequence_model.txt","wb") as f:
-            f.write(data["model_info"])
-        return None
+    def get_sequence_model(self):
+        return self.get_prediction_model("sequence")["model_file"]
+        # query_dict = {"sequence_model": model}
+        # data = self.collection.find_one(query_dict)
+        # with open("sequence_model.pt","wb") as f:
+        #     f.write(data["sequence_model"])
+        # with open("sequence_model.txt","wb") as f:
+        #     f.write(data["model_info"])
+        # return "sequence_model.pt"
