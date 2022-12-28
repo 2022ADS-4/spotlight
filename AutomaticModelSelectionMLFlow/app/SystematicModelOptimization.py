@@ -131,7 +131,7 @@ best_model.fit(dataset)
 
 torch.save(best_model, "saved_model.pt")
 
-MONGO_ACCESS = MongoDB()
+MONGO_ACCESS = MongoDB(collection="models")
 
 model_file = 'saved_model.pt'
 model_infos = 'saved_model.txt'

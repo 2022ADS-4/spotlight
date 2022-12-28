@@ -13,11 +13,13 @@ class MovieLens:
     """
     URL_DATA = "https://files.grouplens.org/datasets/movielens/ml-latest.zip"
     URL_DEMO = "https://files.grouplens.org/datasets/movielens/ml-latest-small.zip"
+    URL_100K = "https://files.grouplens.org/datasets/movielens/ml-100k.zip"
 
     def __init__(
             self,
             use_demo_data:bool=False,
             use_big_data:bool=True,
+            data_size_variant=None,
             temp_folder=None,
             data_download_path = None,
             merged_data_path = None,
@@ -27,6 +29,7 @@ class MovieLens:
     ):
         self.use_demo_data = use_demo_data
         self.use_big_data = use_big_data
+        self.data_size_variant = data_size_variant
         if all([use_big_data, use_demo_data]): ## make sure not both are selected
             raise Exception("Cannot download both demo and big data at the same time")
 
@@ -38,10 +41,13 @@ class MovieLens:
         self.compress = compress
         self.output_path = output_path
         ###Variables used in the methods
-        self.url = self.URL_DATA if self.use_big_data and not self.use_demo_data else self.URL_DEMO
+        if self.data_size_variant is not None:
+            if self.data_size_variant == "100K":
+                self.url = self.URL_100K
+        else:
+            self.url = self.URL_DATA if self.use_big_data and not self.use_demo_data else self.URL_DEMO
         self.zipped_folder_name = self.url.split("/")[-1].split(".")[0]  ## To get the folder name from the url
 
-        #self.zipped_folder_name = None ##the files extracted to a folder ---> get from url, while downloading
         self.movies_path = os.path.join(self.tempfolder, self.zipped_folder_name, "movies.csv")
         self.links_data = None
         self.movies_data = None
@@ -57,11 +63,13 @@ class MovieLens:
 
         os.replace(self.movies_json, os.path.join(DATA_PATH, "movie_titles.json"))
 
-        self.remove_temp(self.tempfolder)
+        #self.remove_temp(self.tempfolder)
 
-    def process_upload_db(self):
-        for user_dict in self.parse_csv(self.data_path):
-            self.upload_data(None, None,user_dict)
+    def process_upload_db(self,collection):
+        data = []
+        for user_data in self.parse_csv(self.output_path):
+            data.append(user_data)
+        self.upload_data(collection,data)
 
     def process_data_for_spotlight_model(self):
         """
@@ -113,6 +121,7 @@ class MovieLens:
 
         self.merge_file()
         self.get_movie_titles_json()
+
     def merge_file(self):
         ### merge the csv files
         files_to_merged = ["links.csv", "movies.csv", "ratings.csv", "tags.csv"]
@@ -159,9 +168,9 @@ class MovieLens:
                     }
 
     @staticmethod
-    def upload_data(db_user, db_pass, data):
+    def upload_data(collection,data):
         from API.connect_db import MongoDB
-        mdb = MongoDB(db_user, db_pass)
+        mdb = MongoDB(collection=collection)
         if isinstance(data, dict):
             mdb.insert_entry(data)
         elif isinstance(data, list):
@@ -213,6 +222,8 @@ class MovieLens:
         ### removes a path and children underneath
         shutil.rmtree(path=path)
 
+#ml = MovieLens(use_demo_data=True, use_big_data=False, output_path=os.path.join(DATA_PATH, "ml-data.csv"))
+#ml.process_upload_db(collection="main")
 
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
