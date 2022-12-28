@@ -58,7 +58,7 @@ print(recommend_movies(1, dataset.item_ids, model))
 
 torch.save(model, "explicit_model.pt")
 
-MONGO_ACCESS = MongoDB()
+MONGO_ACCESS = MongoDB(collection="models")
 
 model_file = 'explicit_model.pt'
 with open(model_file, "rb") as f:

@@ -44,8 +44,8 @@ class MongoDB:
         return self.get_info({"user_id": user_id})
 
     def post_user_rating(self, user_id, movie_id, rating):
-        query_dict = {"user_id": user_id, "movie_id": movie_id, "rating": rating}
-        user_previous = self.get_info({"user_id": user_id, "movie_id": movie_id})
+        query_dict = {"user_id": str(user_id), "movie_id": str(movie_id), "rating": int(rating)}
+        user_previous = self.get_info({"user_id": str(user_id), "movie_id": str(movie_id)})
         if user_previous:
             return self.update_entry(user_previous, query_dict)
         return self.insert_entry(query_dict)
